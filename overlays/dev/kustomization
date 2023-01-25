@@ -1,0 +1,57 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - "../../base"
+
+namePrefix: kustomize-dev-
+
+images:
+  - name: nginx
+    newTag: 1.14.1
+
+configMapGenerator:
+  # - name: example-configmap-1
+  #   files:
+  #   - application.properties
+  # - name: example-configmap-2
+  #   literals:
+  #   - FOO2=Bar2
+  - name: additional-envs
+    envs:
+      - .env
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+patches:
+- path: patch.yaml
+  target:
+    group: apps
+    version: v1
+    kind: Deployment
+    #name: kustomize*
+#     labelSelector: "env=dev"
+#    annotationSelector: "zone=west"
+- patch: |-
+    - op: add
+      path: '/spec/template/spec/containers/0/env'
+      value:
+        # literal value inline
+        - name: my_static_value
+          value: "1"
+        # literal value from configmap
+        - name: my_literal
+          valueFrom:
+            configMapKeyRef:
+              name: literal-cm-reloader
+              key: my_literal
+        # single key from env file configmap
+        - name: my_additional
+          valueFrom:
+            configMapKeyRef:
+              name: env-additional-cm-reloader
+              key: my_additional
+  target:
+    kind: Deployment
+    name: nginx-deployment    

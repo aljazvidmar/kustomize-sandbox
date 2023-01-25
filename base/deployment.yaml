@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  strategy:
+    rollingUpdate:
+      maxSurge: 5
+      maxUnavailable: 1
+    type: RollingUpdate      
+  template:
+    metadata:
+      labels:
+        app: nginx      
+    spec:     
+      containers:
+      - name: nginx              
+        image: nginx:latest       
+        imagePullPolicy: IfNotPresent                           
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP        
+        restartPolicy: Always          
+        env:      
+        - name: BOO
+          valueFrom:
+            configMapKeyRef:
+              key: BOO
+              name: foo-cfg
+              optional: false
+          envFrom:
+          - configMapRef:
+              name: nginx-cfg
+              optional: false       
+        resources:
+          limits:
+            cpu: 1
+            memory: 128M
+          
